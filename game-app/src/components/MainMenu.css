@@ -23,9 +23,10 @@
   color: #ffd700;
   text-align: center;
   margin: 0 0 10px 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5),
-               0 0 20px rgba(255, 215, 0, 0.3);
-  font-family: 'Georgia', serif;
+  text-shadow:
+    2px 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(255, 215, 0, 0.3);
+  font-family: "Georgia", serif;
 }
 
 .game-subtitle {
@@ -185,4 +186,39 @@
 
 .start-game-btn:active {
   transform: translateY(-1px);
+}
+
+.chapters-section {
+  margin-bottom: 25px;
+}
+
+.chapter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chapter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.chapter-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.chapter-chip {
+  padding: 6px 10px;
+  border-radius: 12px;
+  color: #111;
+  font-weight: 600;
+  font-size: 0.9rem;
 }

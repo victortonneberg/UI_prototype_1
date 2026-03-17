@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import Dice3D from './Dice3D';
-import QuestionCard from './QuestionCard';
-import { questions, getCategoryFromDice } from '../data/questions';
-import './GameBoard.css';
+import { useState, useEffect } from "react";
+import Dice3D from "./Dice3D";
+import QuestionCard from "./QuestionCard";
+import { questions, categories } from "../data/questions";
+import "./GameBoard.css";
 
 function GameBoard({ gameSettings, onBackToMenu }) {
-  const [gameState, setGameState] = useState('rolling'); // rolling, diceComplete, question
+  const [gameState, setGameState] = useState("rolling"); // rolling, diceComplete, question
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [d6Result, setD6Result] = useState(null);
   const [d20Result, setD20Result] = useState(null);
@@ -16,8 +16,35 @@ function GameBoard({ gameSettings, onBackToMenu }) {
 
   const currentPlayer = gameSettings.players[currentPlayerIndex];
 
+  const getSelectedCategoryFromD20 = (d20Value) => {
+    // Determine selected chapter IDs from settings (fallback to all)
+    const selectedIds =
+      gameSettings &&
+      gameSettings.selectedChapters &&
+      gameSettings.selectedChapters.length
+        ? gameSettings.selectedChapters
+        : categories.map((c) => c.id);
+
+    // Keep categories in the original order and filter to selected
+    let selectedCats = categories.filter((c) => selectedIds.includes(c.id));
+    if (selectedCats.length === 0) selectedCats = categories;
+
+    const n = selectedCats.length;
+    const base = Math.floor(20 / n);
+    const remainder = 20 % n; // distribute the remainder to the first `remainder` buckets
+
+    let cumulative = 0;
+    for (let i = 0; i < n; i++) {
+      const size = base + (i < remainder ? 1 : 0);
+      cumulative += size;
+      if (d20Value <= cumulative) return selectedCats[i];
+    }
+
+    return selectedCats[selectedCats.length - 1];
+  };
+
   const rollDice = () => {
-    setGameState('rolling');
+    setGameState("rolling");
     setIsD6Rolling(true);
     setIsD20Rolling(true);
 
@@ -39,26 +66,36 @@ function GameBoard({ gameSettings, onBackToMenu }) {
 
   // Check when both dice are done rolling
   useEffect(() => {
-    if (!isD6Rolling && !isD20Rolling && d6Result && d20Result && gameState === 'rolling') {
-      const category = getCategoryFromDice(d20Result);
+    if (!gameSettings) return;
+
+    if (
+      !isD6Rolling &&
+      !isD20Rolling &&
+      d6Result &&
+      d20Result &&
+      gameState === "rolling"
+    ) {
+      const category = getSelectedCategoryFromD20(d20Result);
       setCurrentCategory(category);
-      setGameState('diceComplete');
+      setGameState("diceComplete");
     }
-  }, [isD6Rolling, isD20Rolling, d6Result, d20Result, gameState]);
+  }, [isD6Rolling, isD20Rolling, d6Result, d20Result, gameState, gameSettings]);
 
   const handleProceedToQuestion = () => {
     // Get random question from category based on difficulty
-    const categoryQuestions = questions[currentCategory.id][currentPlayer.difficulty];
-    const randomQuestion = categoryQuestions[Math.floor(Math.random() * categoryQuestions.length)];
+    const categoryQuestions =
+      questions[currentCategory.id][currentPlayer.difficulty];
+    const randomQuestion =
+      categoryQuestions[Math.floor(Math.random() * categoryQuestions.length)];
 
     setCurrentQuestion(randomQuestion);
-    setGameState('question');
+    setGameState("question");
   };
 
   const handleAnswer = (isCorrect) => {
     // Move to next player
     setCurrentPlayerIndex((prev) => (prev + 1) % gameSettings.numPlayers);
-    setGameState('rolling');
+    setGameState("rolling");
     setD6Result(null);
     setD20Result(null);
     setCurrentQuestion(null);
@@ -78,17 +115,21 @@ function GameBoard({ gameSettings, onBackToMenu }) {
         {gameSettings.players.map((player, index) => (
           <div
             key={index}
-            className={`player-info ${index === currentPlayerIndex ? 'active' : ''}`}
+            className={`player-info ${index === currentPlayerIndex ? "active" : ""}`}
           >
             <div className="player-name">{player.name}</div>
             <div className="player-difficulty">
-              {player.difficulty === 'easy' ? 'Lett' : player.difficulty === 'medium' ? 'Middels' : 'Vanskelig'}
+              {player.difficulty === "easy"
+                ? "Lett"
+                : player.difficulty === "medium"
+                  ? "Middels"
+                  : "Vanskelig"}
             </div>
           </div>
         ))}
       </div>
 
-      {(gameState === 'rolling' || gameState === 'diceComplete') && (
+      {(gameState === "rolling" || gameState === "diceComplete") && (
         <div className="rolling-section">
           <div className="current-player-display">
             <h2>{currentPlayer.name} sin tur!</h2>
@@ -109,7 +150,11 @@ function GameBoard({ gameSettings, onBackToMenu }) {
                     onRollComplete={handleD6Complete}
                     result={d6Result}
                   />
-                  {!isD6Rolling && <div className="dice-result">Du flytter {d6Result} felt!</div>}
+                  {!isD6Rolling && (
+                    <div className="dice-result">
+                      Du flytter {d6Result} felt!
+                    </div>
+                  )}
                 </div>
 
                 <div className="dice-section">
@@ -125,7 +170,10 @@ function GameBoard({ gameSettings, onBackToMenu }) {
                       <div className="dice-result">
                         Du fikk: <strong>{d20Result}</strong>
                       </div>
-                      <div className="dice-result" style={{ color: currentCategory.color }}>
+                      <div
+                        className="dice-result"
+                        style={{ color: currentCategory.color }}
+                      >
                         {currentCategory.name}
                       </div>
                     </>
@@ -133,17 +181,22 @@ function GameBoard({ gameSettings, onBackToMenu }) {
                 </div>
               </div>
 
-              {gameState === 'diceComplete' && !isD6Rolling && !isD20Rolling && (
-                <button className="proceed-btn" onClick={handleProceedToQuestion}>
-                  Gå til Spørsmål →
-                </button>
-              )}
+              {gameState === "diceComplete" &&
+                !isD6Rolling &&
+                !isD20Rolling && (
+                  <button
+                    className="proceed-btn"
+                    onClick={handleProceedToQuestion}
+                  >
+                    Gå til Spørsmål →
+                  </button>
+                )}
             </>
           )}
         </div>
       )}
 
-      {gameState === 'question' && currentQuestion && currentCategory && (
+      {gameState === "question" && currentQuestion && currentCategory && (
         <QuestionCard
           question={currentQuestion}
           category={currentCategory}
